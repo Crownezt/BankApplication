@@ -6,7 +6,9 @@ import com.wunmi.BankApplication.exceptions.AccountNumberAlreadyExistException;
 
 public interface AccountServices {
     CreateAccountResponse createAccount(CreateAccountRequest createAccountRequest) throws AccountNumberAlreadyExistException;
+    ViewAccountResponse viewAccount(ViewAccountRequest viewAccount);
     DepositResponse deposit(DepositRequest request);
-    WithdrawalResponse withdrawal(WithdrawalRequest request);
+    WithdrawalResponse withdraw(WithdrawalRequest request);
+    public TransferResponse transfer(TransferRequest request);
 
 }

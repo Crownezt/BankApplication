@@ -24,9 +24,11 @@ public class AccountController {
         catch(EmailAlreadyExistException e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-
-        public ResponseEntity<?> deposit()
     }
+
+//    public ResponseEntity<?> accountDetails(@RequestBody CreateAccountRequest createAccountRequest) {
+//
+//    }
 
 
 }

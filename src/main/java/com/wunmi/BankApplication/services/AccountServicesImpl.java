@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.wunmi.BankApplication.util.ModelMapper;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @Service
@@ -17,6 +18,7 @@ public class AccountServicesImpl implements AccountServices {
     @Autowired
     private AccountRepository accountRepository;
     private final ModelMapper modelMapper = new ModelMapper();
+
 
     @Override
     public CreateAccountResponse createAccount(CreateAccountRequest createAccountRequest) throws AccountNumberAlreadyExistException {
@@ -30,21 +32,53 @@ public class AccountServicesImpl implements AccountServices {
     }
 
     @Override
-    public DepositResponse deposit(DepositRequest request) {
-        Account account = new Account();
-        account.setBalance(account.getBalance().add(request.getAmount()));
-        return new DepositResponse("Successful",account.getBalance());
+    public ViewAccountResponse viewAccount(ViewAccountRequest viewAccount) {
+        return null;
     }
 
     @Override
-    public WithdrawalResponse withdrawal(WithdrawalRequest request) {
+    public DepositResponse deposit(DepositRequest request) {
         Account account = new Account();
-        if (account.getBalance().compareTo(request.getAmount()) > 0) {
-            account.setBalance(account.getBalance().subtract(request.getAmount()));
-            return new WithdrawalResponse("Your balance is ",account.getBalance());
+        Optional<Account> accountToCredit = accountRepository.findByAccountNumber(request.getAccountNumber());
+        if (accountToCredit.isPresent()) {
+            boolean amountValidation = request.getDepositAmount().compareTo(BigDecimal.ZERO) > 0;
+            if (amountValidation) {
+                BigDecimal balance = accountToCredit.get().getBalance().add(request.getDepositAmount());
+                account.setBalance(balance);
+                accountRepository.save(account);
+                return new DepositResponse("Successful, Your balance is ", balance);
+            } else return new DepositResponse("Invalid amount");
         }
-        else
-            return new WithdrawalResponse("Insufficient Balance", account.getBalance());
+        return new DepositResponse("Account not found");
     }
+
+    @Override
+    public WithdrawalResponse withdraw(WithdrawalRequest request) {
+        Optional<Account> accountToDebit = accountRepository.findByAccountNumber(request.getAccountNumber());
+        if (accountToDebit.isPresent()) {
+            Account account = new Account();
+            boolean pinValidation = account.getPin().equals(request.getPin());
+            boolean amountValidation = accountToDebit.get().getBalance().compareTo(request.getWithdrawalAmount()) > 0;
+            if (pinValidation) {
+                if (amountValidation) {
+                    BigDecimal balance = account.getBalance().subtract(request.getWithdrawalAmount());
+                    return new WithdrawalResponse("Transaction successful, Your balance is ", balance);
+                } else return new WithdrawalResponse("Insufficient Balance", account.getBalance());
+            } else return new WithdrawalResponse("Invalid pin");
+        }
+        return new WithdrawalResponse("Account not found");
+    }
+
+    public TransferResponse transfer(TransferRequest request) {
+        WithdrawalRequest withdrawalRequest = new WithdrawalRequest(request.getSenderAccountNumber(),
+                request.getTransferAmount(), request.getSenderPin());
+        DepositRequest depositRequest = new DepositRequest(request.getReceiverAccountNumber(), request.getTransferAmount());
+        return new TransferResponse("Transfer Successful");
+    }
+
+
+//    private void withdraw(BigDecimal amount) {
+//    }
+
 
 }
